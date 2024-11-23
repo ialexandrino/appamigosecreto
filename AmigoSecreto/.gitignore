@@ -1,6 +1,27 @@
 # Excluir a pasta de migrações do Flask-Migrate
 migrations/
-
+../Agendador/
+../AppGlue/
+../CEP_Back/
+../CEP_Front/
+../Curriculo Online/
+../Desenho/
+../Lab_test/
+../Lista de Natal/
+../ListaNatalProd.zip
+../ListaNatalProd/
+../ListaNatalProdFuncional.zip
+../Loteria/
+../Moedas/
+../RedeSocial/
+../Rede_Social_Lab/
+../api_ml/
+../awslab/
+../back-end-produtos/
+../e-commerce/
+../livraria-backend/
+../livraria-frontend/
+../travel_app/
 # Excluir a pasta de arquivos de configuração específica da instância Flask
 instance/
 
