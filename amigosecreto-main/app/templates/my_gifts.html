@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Meus Presentes</h2>
+
+    <!-- Formulário para Adicionar Presentes -->
+    <form method="POST" class="mb-5">
+        <div class="mb-3">
+            <label for="gift_name" class="form-label">Nome do Presente</label>
+            <input type="text" class="form-control" id="gift_name" name="gift_name" placeholder="Digite o nome do presente" required>
+        </div>
+        <div class="mb-3">
+            <label for="gift_link" class="form-label">Link do Presente</label>
+            <input type="url" class="form-control" id="gift_link" name="gift_link" placeholder="Digite o link do presente (opcional)">
+        </div>
+        <div class="d-flex justify-content-between">
+            <button type="submit" name="add_gift" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Adicionar Presente
+            </button>
+            <a href="{{ url_for('main.home') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </form>
+
+    <!-- Lista de Presentes -->
+    <h3 class="mb-3">Presentes Adicionados</h3>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Nome</th>
+                    <th>Link</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for gift in gifts %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ gift.name }}</td>
+                    <td>
+                        {% if gift.link %}
+                        <a href="{{ gift.link }}" target="_blank" class="text-decoration-none text-primary">
+                            <i class="bi bi-box-arrow-up-right"></i> Acessar
+                        </a>
+                        {% else %}
+                        <span class="text-muted">Não informado</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="gift_id" value="{{ gift.id }}">
+                            <button type="submit" name="delete_gift" class="btn btn-danger btn-sm">
+                                <i class="bi bi-trash"></i> Remover
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted">Nenhum presente adicionado ainda.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

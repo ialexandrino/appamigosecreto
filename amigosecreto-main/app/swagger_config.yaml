@@ -1,0 +1,220 @@
+swagger: "2.0"
+info:
+  title: "Amigo Secreto API"
+  description: "API para gerenciar o aplicativo Amigo Secreto."
+  version: "1.0.0"
+host: "localhost:5000"
+basePath: "/"
+schemes:
+  - "http"
+paths:
+  /register:
+    post:
+      summary: "Registrar usuário"
+      description: "Cria um novo usuário."
+      parameters:
+        - name: "body"
+          in: "body"
+          required: true
+          schema:
+            type: "object"
+            properties:
+              name:
+                type: "string"
+                example: "John Doe"
+              email:
+                type: "string"
+                example: "johndoe@example.com"
+              password:
+                type: "string"
+                example: "mypassword"
+      responses:
+        201:
+          description: "Usuário criado com sucesso."
+        400:
+          description: "Erro na requisição."
+  /login:
+    post:
+      summary: "Login do usuário"
+      description: "Realiza login e retorna um token de autenticação."
+      parameters:
+        - name: "body"
+          in: "body"
+          required: true
+          schema:
+            type: "object"
+            properties:
+              email:
+                type: "string"
+                example: "johndoe@example.com"
+              password:
+                type: "string"
+                example: "mypassword"
+      responses:
+        200:
+          description: "Login realizado com sucesso."
+        401:
+          description: "Credenciais inválidas."
+  /logout:
+    get:
+      summary: "Logout"
+      description: "Realiza logout do usuário logado."
+      responses:
+        200:
+          description: "Logout realizado com sucesso."
+        401:
+          description: "Usuário não autenticado."
+  /group/new:
+    post:
+      summary: "Criar novo grupo"
+      description: "Permite que um usuário autenticado crie um novo grupo."
+      parameters:
+        - name: "body"
+          in: "body"
+          required: true
+          schema:
+            type: "object"
+            properties:
+              name:
+                type: "string"
+                example: "Meu Grupo"
+              description:
+                type: "string"
+                example: "Descrição do grupo."
+      responses:
+        201:
+          description: "Grupo criado com sucesso."
+        401:
+          description: "Usuário não autenticado."
+  /group/{group_id}/add_participant:
+    post:
+      summary: "Adicionar participante ao grupo"
+      description: "Permite que o criador do grupo adicione um novo participante."
+      parameters:
+        - name: "group_id"
+          in: "path"
+          required: true
+          type: "integer"
+          example: 1
+        - name: "body"
+          in: "body"
+          required: true
+          schema:
+            type: "object"
+            properties:
+              name:
+                type: "string"
+                example: "John Doe"
+              email:
+                type: "string"
+                example: "johndoe@example.com"
+              phone:
+                type: "string"
+                example: "1234567890"
+      responses:
+        200:
+          description: "Participante adicionado com sucesso."
+        401:
+          description: "Usuário não autenticado."
+        403:
+          description: "Ação não permitida."
+  /group/{group_id}/draw:
+    post:
+      summary: "Realizar sorteio"
+      description: "Permite que o criador do grupo realize o sorteio entre os participantes."
+      parameters:
+        - name: "group_id"
+          in: "path"
+          required: true
+          type: "integer"
+          example: 1
+      responses:
+        200:
+          description: "Sorteio realizado com sucesso."
+        401:
+          description: "Usuário não autenticado."
+        403:
+          description: "Ação não permitida."
+        400:
+          description: "O grupo precisa de pelo menos 2 participantes."
+  /my_draw:
+    get:
+      summary: "Meu Amigo Secreto"
+      description: "Retorna quem o usuário tirou no sorteio."
+      responses:
+        200:
+          description: "Informação retornada com sucesso."
+        401:
+          description: "Usuário não autenticado."
+        404:
+          description: "Usuário não participa de nenhum grupo ou sorteio não realizado."
+  /group/{group_id}/draw_result:
+    get:
+      summary: "Ver resultado do sorteio"
+      description: "Permite que o criador do grupo veja o resultado do sorteio."
+      parameters:
+        - name: "group_id"
+          in: "path"
+          required: true
+          type: "integer"
+          example: 1
+      responses:
+        200:
+          description: "Resultado do sorteio retornado com sucesso."
+        401:
+          description: "Usuário não autenticado."
+        403:
+          description: "Ação não permitida."
+  /my_gifts:
+    get:
+      summary: "Meus Presentes"
+      description: "Retorna a lista de presentes adicionados pelo usuário."
+      responses:
+        200:
+          description: "Lista de presentes retornada com sucesso."
+        401:
+          description: "Usuário não autenticado."
+    post:
+      summary: "Adicionar ou remover presente"
+      description: "Permite que o usuário adicione ou remova presentes da sua lista."
+      parameters:
+        - name: "body"
+          in: "body"
+          required: true
+          schema:
+            type: "object"
+            properties:
+              gift_name:
+                type: "string"
+                example: "Livro"
+              gift_link:
+                type: "string"
+                example: "http://exemplo.com/presente"
+      responses:
+        201:
+          description: "Presente adicionado com sucesso."
+        200:
+          description: "Presente removido com sucesso."
+        401:
+          description: "Usuário não autenticado."
+  /errors/404:
+    get:
+      summary: "Erro 404"
+      description: "Página não encontrada."
+      responses:
+        404:
+          description: "Página não encontrada."
+  /errors/500:
+    get:
+      summary: "Erro 500"
+      description: "Erro interno do servidor."
+      responses:
+        500:
+          description: "Erro interno do servidor."
+  /errors/403:
+    get:
+      summary: "Erro 403"
+      description: "Acesso não autorizado."
+      responses:
+        403:
+          description: "Acesso não autorizado."

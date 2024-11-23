@@ -1,0 +1,128 @@
+body {
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.7); /* Apenas para fallback */
+    font-family: 'Arial', sans-serif;
+}
+
+.navbar {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+}
+
+.group-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: start;
+    gap: 10px;
+}
+
+.group-buttons button {
+    min-width: 150px;
+    text-align: center;
+}
+
+form label {
+    font-weight: bold;
+}
+
+form .form-control {
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    padding: 10px;
+}
+
+form button {
+    margin-top: 10px;
+}
+
+.card {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+.card-body {
+    padding: 20px;
+    font-size: 16px;
+}
+
+.card-title {
+    margin-bottom: 10px;
+    font-size: 18px;
+    color: #333;
+}
+
+footer {
+    border-top: 1px solid #444;
+    font-size: 14px;
+}
+
+.card {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.card-body {
+    padding: 15px;
+}
+
+.card-body input {
+    background-color: #f8f9fa;
+    border: 1px solid #ccc;
+    cursor: not-allowed;
+}
+
+.card-body input:focus {
+    outline: none;
+    box-shadow: none;
+    border-color: #adb5bd;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    text-decoration: none;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #004085;
+}
+
+#chat-box {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+}
+
+#chat-box div {
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    background-color: #e9ecef;
+}
+
+#chat-box div:nth-child(odd) {
+    background-color: #d4edda;
+}
+
+.container h1 {
+    color: #343a40; /* Cor do título */
+    margin-bottom: 20px;
+}
+
+.container p.lead {
+    font-size: 1.5rem;
+    color: #6c757d; /* Cor do subtítulo */
+}
+
+.container a.btn {
+    margin: 10px;
+}

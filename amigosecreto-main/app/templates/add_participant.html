@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Adicionar Participante ao Grupo {{ group.name }}</h2>
+<form method="POST">
+    <div class="mb-3">
+        <label for="name" class="form-label">Nome</label>
+        <input type="text" class="form-control" id="name" name="name" placeholder="Digite o nome" required>
+    </div>
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" name="email" placeholder="Digite o email" required>
+    </div>
+    <div class="mb-3">
+        <label for="phone" class="form-label">Celular</label>
+        <input type="text" class="form-control" id="phone" name="phone" placeholder="Digite o celular (opcional)">
+    </div>
+    <button type="submit" class="btn btn-primary">Adicionar</button>
+</form>
+<a href="{{ url_for('main.group_details', group_id=group.id) }}" class="btn btn-secondary mt-3">Voltar</a>
+{% endblock %}
