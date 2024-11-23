@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Resultado do Sorteio</h2>
+    <ul class="list-group">
+        {% for participant, drawn in sorteio.items() %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <strong>{{ participant.name }}</strong>
+                <span class="text-muted">tirou</span>
+                <strong>{{ drawn.name }}</strong>
+            </li>
+        {% endfor %}
+    </ul>
+    <div class="mt-4 text-center">
+        <a href="{{ url_for('main.group_details', group_id=group.id) }}" class="btn btn-primary">Voltar</a>
+    </div>
+</div>
+{% endblock %}

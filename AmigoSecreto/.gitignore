@@ -1,0 +1,40 @@
+# Excluir a pasta de migrações do Flask-Migrate
+migrations/
+
+# Excluir a pasta de arquivos de configuração específica da instância Flask
+instance/
+
+# Excluir o ambiente virtual
+.venv/
+env/
+venv/
+ENV/
+
+# Excluir arquivos de cache do Python
+__pycache__/
+*.py[cod]
+
+# Excluir arquivos de log
+*.log
+
+# Excluir banco de dados SQLite
+*.sqlite3
+*.db
+
+# Excluir configurações sensíveis ou temporárias
+*.env
+.env.local
+.env.*.backup
+
+# Excluir arquivos e diretórios criados por editores/IDEs
+.idea/
+.vscode/
+*.swp
+*~
+
+# Excluir arquivos temporários ou backups
+*.bak
+*.tmp
+
+# Excluir dependências geradas pelo pip
+pip-log.txt
