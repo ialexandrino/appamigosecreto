@@ -1,12 +1,15 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_socketio import emit, join_room, leave_room
+from .email_service import enviar_email
 from . import socketio
 from .forms import RegistrationForm, LoginForm, GroupForm, GiftForm
 from .models import User, Group, Participant, Gift, Message
 from . import db
 import random
 import requests
+import os
+from .utils import gerar_link_acesso_direto
 
 main = Blueprint('main', __name__)
 
@@ -91,16 +94,28 @@ def new_group():
         db.session.commit()
 
 
-        participant = Participant(
+        creator_participant = Participant(
             user_id=current_user.id,
             group_id=group.id,
             name=current_user.name,
             email=current_user.email
         )
-        db.session.add(participant)
+        db.session.add(creator_participant)
         db.session.commit()
 
-        flash('Grupo criado com sucesso!', 'success')
+
+        link_acesso = gerar_link_acesso_direto(current_user.email, group.id)
+        enviar_email(
+            destinatario=current_user.email,
+            assunto=f'Grupo "{group.name}" criado com sucesso!',
+            conteudo_html=f"""
+                <h1>Grupo "{group.name}" foi criado!</h1>
+                <p>Você é o administrador deste grupo. Clique no link abaixo para acessá-lo:</p>
+                <a href="{link_acesso}">Acessar Grupo</a>
+            """
+        )
+
+        flash('Grupo criado com sucesso! Você pode começar a conversar no chat.', 'success')
         return redirect(url_for('main.group_details', group_id=group.id))
     return render_template('grupo.html', form=form)
 
@@ -131,19 +146,17 @@ def handle_group_chat(data):
     room = f"group_{group_id}"
     join_room(room)
 
-
     participant = Participant.query.filter_by(email=current_user.email, group_id=group_id).first()
     if not participant:
         emit('error', {'msg': 'Você não está neste grupo.'})
         return
 
     if not participant.character_name:
-
         participant.character_name = get_random_harry_potter_name()
         db.session.commit()
 
-
     emit('message', {'msg': f"{participant.character_name} entrou no chat do grupo."}, room=room)
+
 
 @socketio.on("group_message")
 def handle_group_message(data):
@@ -158,7 +171,7 @@ def handle_group_message(data):
 
     sender_name = participant.character_name  
 
-    # Salvar a mensagem no banco de dados
+
     message = Message(group_id=group_id, sender_name=sender_name, content=message_content)
     db.session.add(message)
     db.session.commit()
@@ -183,15 +196,46 @@ def add_participant(group_id):
     if request.method == 'POST':
         name = request.form.get('name')
         email = request.form.get('email')
-        phone = request.form.get('phone')
+
 
         if any(p.email == email for p in group.members):
             flash(f'O participante com email "{email}" já foi adicionado ao grupo.', 'warning')
             return redirect(url_for('main.group_details', group_id=group_id))
 
-        participant = Participant(name=name, email=email, phone=phone, group_id=group.id)
+
+        participant = Participant(name=name, email=email, group_id=group.id)
         db.session.add(participant)
         db.session.commit()
+
+
+        link_acesso = gerar_link_acesso_direto(email=email, group_id=group.id)
+
+
+        conteudo_html = f"""
+        <h1 style="color: #4CAF50;">🎉 Você foi adicionado ao grupo {group.name}! 🎉</h1>
+        <p>Olá <strong>{name}</strong>,</p>
+        <p>Você foi adicionado ao grupo <strong>{group.name}</strong> no sistema Amigo Secreto.</p>
+        <p>Para acessar o grupo diretamente, clique no link abaixo:</p>
+        <p style="margin-top: 20px; text-align: center;">
+            <a href="{link_acesso}" 
+               style="background-color: #4CAF50; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px;">
+               Acessar Grupo
+            </a>
+        </p>
+        <p style="font-size: 14px; color: #555;">Este link é válido por 1 hora.</p>
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+        <footer style="text-align: center; font-size: 12px; color: #999;">
+            <p><strong>Amigo Secreto</strong> - Torne seu sorteio mais especial!</p>
+        </footer>
+        """
+
+
+        enviar_email(
+            destinatario=email,
+            assunto=f'Você foi adicionado ao grupo "{group.name}"!',
+            conteudo_html=conteudo_html
+        )
+
         flash(f'Participante "{name}" foi adicionado ao grupo "{group.name}".', 'success')
         return redirect(url_for('main.group_details', group_id=group_id))
 
@@ -202,33 +246,55 @@ def add_participant(group_id):
 @main.route('/group/<int:group_id>/draw', methods=['POST'])
 @login_required
 def draw(group_id):
-    
     group = Group.query.get_or_404(group_id)
-
 
     if group.creator_id != current_user.id:
         flash('Apenas o criador do grupo pode realizar o sorteio.', 'danger')
         return redirect(url_for('main.group_details', group_id=group_id))
 
-  
     participants = Participant.query.filter_by(group_id=group_id).all()
 
- 
     if len(participants) < 2:
         flash('O grupo precisa de pelo menos 2 participantes para realizar o sorteio.', 'warning')
         return redirect(url_for('main.group_details', group_id=group_id))
-
 
     shuffled = participants[:]
     random.shuffle(shuffled)
 
     for i, participant in enumerate(shuffled):
-
         drawn_participant = shuffled[(i + 1) % len(shuffled)]
         participant.drawn_participant_id = drawn_participant.id
 
+
+        link_acesso = gerar_link_acesso_direto(participant.email, group.id)
+
+
+        conteudo_html = f"""
+        <h1 style="color: #FF5722; text-align: center;">✨ Sorteio Realizado! ✨</h1>
+        <p>Olá <strong>{participant.name}</strong>,</p>
+        <p>O sorteio do grupo <strong>{group.name}</strong> foi concluído!</p>
+        <p style="font-size: 16px;">
+        <span style="color: #4CAF50;"><strong>🎁 Você tirou:</strong></span> <strong>{drawn_participant.name}</strong>.
+        </p>
+        <p style="font-size: 14px; color: #555;">
+        Clique no link abaixo para acessar diretamente o grupo e ver mais detalhes:
+        </p>
+        <p style="text-align: center; margin: 20px 0;">
+            <a href="{link_acesso}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Acessar Grupo</a>
+        </p>
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+        <footer style="text-align: center; font-size: 12px; color: #999;">
+            <p><strong>Amigo Secreto</strong> - Divirta-se e boas compras!</p>
+        </footer>
+        """
+        enviar_email(
+            destinatario=participant.email,
+            assunto="Sorteio realizado!",
+            conteudo_html=conteudo_html
+        )
+
     db.session.commit()
-    flash('Sorteio realizado com sucesso!', 'success')
+    flash('Sorteio realizado com sucesso e e-mails enviados!', 'success')
     return redirect(url_for('main.group_details', group_id=group_id))
 
 
@@ -254,26 +320,28 @@ def group_details(group_id):
 @login_required
 def my_draw():
 
-    participant = Participant.query.filter_by(email=current_user.email).first()
+    user_groups = Group.query.join(Participant, isouter=True)\
+        .filter(
+            (Group.creator_id == current_user.id) |
+            (Participant.email == current_user.email)
+        ).all()
 
-    if not participant:
-        flash('Você ainda não está participando de nenhum grupo.', 'warning')
-        return redirect(url_for('main.home'))
+    sorteios = []  
+    for group in user_groups:
+
+        participant = Participant.query.filter_by(email=current_user.email, group_id=group.id).first()
+        drawn = Participant.query.get(participant.drawn_participant_id) if participant and participant.drawn_participant_id else None
+
+        sorteios.append({
+            "group": group,
+            "participant": participant,
+            "drawn": drawn
+        })
+
+    return render_template('my_draw.html', sorteios=sorteios)
 
 
-    drawn = None
-    if participant.drawn_participant_id:
-        drawn = Participant.query.get(participant.drawn_participant_id)
 
-    gifts = Gift.query.filter_by(participant_id=participant.drawn_participant_id).all() if drawn else []
-
-    return render_template('my_draw.html', participant=participant, drawn=drawn, gifts=gifts)
-
-
-
-
-
-# Rota: Meus Presentes
 @main.route('/my_gifts', methods=['GET', 'POST'])
 @login_required
 def my_gifts():
@@ -283,7 +351,6 @@ def my_gifts():
         flash('Você ainda não está participando de nenhum grupo.', 'warning')
         return redirect(url_for('main.home'))
 
-    # Consulta todos os presentes adicionados
     gifts = Gift.query.filter_by(participant_id=participant.id).all()
 
     if request.method == 'POST':
@@ -300,12 +367,28 @@ def my_gifts():
                 )
                 db.session.add(new_gift)
                 db.session.commit()
-                flash('Presente adicionado com sucesso!', 'success')
+
+
+                drawn_by = Participant.query.filter_by(drawn_participant_id=participant.id).first()
+                if drawn_by:
+                    link_acesso = gerar_link_acesso_direto(drawn_by.email, participant.group_id)
+                    enviar_email(
+                        destinatario=drawn_by.email,
+                        assunto=f"Novo presente adicionado por {participant.name}",
+                        conteudo_html=f"""
+                            <h1>{participant.name} adicionou um presente à lista!</h1>
+                            <p>O presente adicionado foi: <strong>{gift_name}</strong>.</p>
+                            <p>Clique no link abaixo para acessar o grupo e conferir os detalhes:</p>
+                            <a href="{link_acesso}">Acessar Grupo</a>
+                        """
+                    )
+
+                flash('Presente adicionado com sucesso e notificação enviada!', 'success')
             else:
                 flash('O nome do presente é obrigatório.', 'warning')
 
         elif 'delete_gift' in request.form:
-            # Remover presente
+
             gift_id = request.form.get('gift_id')
             gift = Gift.query.get(gift_id)
             if gift and gift.participant_id == participant.id:
@@ -317,7 +400,9 @@ def my_gifts():
 
     return render_template('my_gifts.html', participant=participant, gifts=gifts)
 
-# Rota: Visualizar Presente
+
+
+
 @main.route('/view_gift/<int:participant_id>', methods=['GET'])
 @login_required
 def view_gift(participant_id):
@@ -335,28 +420,76 @@ def view_gift(participant_id):
 def view_draw_result(group_id):
     group = Group.query.get_or_404(group_id)
 
-    # Verificar se o usuário é o criador
+
     if group.creator_id != current_user.id:
         flash('Apenas o criador do grupo pode ver os resultados do sorteio.', 'danger')
         return redirect(url_for('main.group_details', group_id=group_id))
 
-    # Obter os participantes e seus sorteados
+
     participants = group.members
     sorteio = {p: Participant.query.get(p.drawn_user_id) for p in participants if p.drawn_user_id}
 
     return render_template('draw_result.html', group=group, sorteio=sorteio)
 
-# Tratamento de erro 404
+
 @main.app_errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
 
-# Tratamento de erro 500
+
 @main.app_errorhandler(500)
 def internal_server_error(e):
     return render_template('500.html'), 500
 
-# Tratamento de erro 403
+
 @main.app_errorhandler(403)
 def forbidden(e):
     return render_template('403.html'), 403
+
+@main.route('/test-email', methods=['GET'])
+def test_email():
+    """
+    Rota para testar o envio de e-mails usando a API da Brevo.
+    """
+    try:
+        destinatario = "ivan.alexandrino@outlook.com"
+        assunto = "Teste de Integração com a API da Brevo"
+        conteudo_html = """
+        <h1>Teste de Integração</h1>
+        <p>Se você está vendo este e-mail, a integração com a API da Brevo foi realizada com sucesso!</p>
+        """
+
+
+        enviar_email(destinatario, assunto, conteudo_html)
+
+        return "E-mail enviado com sucesso!"
+    except Exception as e:
+        return f"Erro ao enviar e-mail: {e}"
+
+
+@main.route('/group/access/<token>', methods=['GET'])
+def acesso_direto(token):
+    """
+    Rota para permitir acesso direto ao grupo sem autenticação via token.
+    """
+    serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+    try:
+        data = serializer.loads(token, max_age=3600) 
+        email = data.get('email')
+        group_id = data.get('group_id')
+
+
+        participant = Participant.query.filter_by(email=email, group_id=group_id).first()
+        if not participant:
+            flash("Acesso negado. Você não faz parte deste grupo.", "danger")
+            return redirect(url_for('main.intro'))
+
+        group = Group.query.get_or_404(group_id)
+
+
+        flash(f"Acesso concedido ao grupo {group.name}.", "success")
+        return render_template('group_details.html', group=group)
+    except Exception as e:
+        print(f"Erro ao acessar o token: {e}")
+        flash("O link de acesso expirou ou é inválido.", "danger")
+        return redirect(url_for('main.intro'))

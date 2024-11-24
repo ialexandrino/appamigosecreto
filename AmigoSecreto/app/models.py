@@ -17,17 +17,17 @@ class User(db.Model, UserMixin):
     def check_password(self, password):
         return bcrypt.check_password_hash(self.password, password)
 
-# Modelo Group
+
 class Group(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(300))
     creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-    # Relacionamento com os participantes
+
     members = db.relationship('Participant', back_populates='group', lazy=True, cascade='all, delete-orphan')
 
-# Modelo Participant
+
 class Participant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)

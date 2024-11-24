@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Chat Anônimo</h2>
+<h2>Chat</h2>
 <div id="chat-box" class="border rounded p-3 mb-3" style="height: 300px; overflow-y: auto;">
-    <!-- Mensagens aparecem aqui -->
+    <!-- Mensagens aparecerão aqui -->
 </div>
 
 <form id="chat-form">
@@ -23,14 +23,16 @@
 <script>
     const socket = io();
 
-    // Determinar a sala de chat
+    // Determinar a sala de chat (grupo ou privado)
     const room = "{{ 'group_' + group.id if group else 'private_chat_' + participant.id }}";
+    const messageEvent = "{{ 'group_message' if group else 'private_message' }}";
+    const joinEvent = "{{ 'join_group_chat' if group else 'join_private_chat' }}";
 
     // Entrar na sala
-    socket.emit(group ? "join_group_chat" : "join_private_chat", { room: room });
+    socket.emit(joinEvent, { room: room });
 
     // Receber mensagens
-    socket.on(group ? "group_message" : "private_message", function(data) {
+    socket.on(messageEvent, function(data) {
         const chatBox = document.getElementById("chat-box");
         const messageElement = document.createElement("div");
         messageElement.innerHTML = `<strong>${data.sender}:</strong> ${data.message}`;
@@ -44,7 +46,7 @@
         const messageInput = document.getElementById("message-input");
         const message = messageInput.value;
         messageInput.value = "";
-        socket.emit(group ? "group_message" : "private_message", {
+        socket.emit(messageEvent, {
             room: room,
             message: message,
         });
